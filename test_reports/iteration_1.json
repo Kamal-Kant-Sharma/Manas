@@ -1,0 +1,34 @@
+{
+  "summary": "Frontend-only E2E test of Neuroforge (local-only React app). All primary user flows PASS: dashboard, sidebar navigation, tasks index, N-Back / PASAT / Memory Span runners end-to-end with SessionSummary, presets load/run/delete, sessions search/delete/trash/restore, JSON+CSV export, Analytics (all 5 charts), Goals create+achieved styling, Settings profile/sound/persist, and localStorage persistence across reload. One CRITICAL bug found in restoreSession under React.StrictMode causing duplicated sessions.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "store.restoreSession",
+        "issue": "Restoring a session from trash duplicates the session in the sessions list. Root cause: setSessions() is called inside the setTrash() state updater (side effect inside a React state updater). React.StrictMode (enabled in /app/frontend/src/index.js) double-invokes updaters in dev, so the restored session is prepended twice. Confirmed via screenshot showing 4 sessions after seeding 3 and restoring 1.",
+        "selector": "[data-testid='restore-{id}']",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_1.json"],
+  "action_items": [
+    "Fix restoreSession() in /app/frontend/src/lib/store.js — do not call setSessions inside setTrash updater. Compute target from trash outside the updater OR use a useEffect that reacts to trash changes. Suggested pattern: const target = trash.find(x=>x.id===id); if(target){ setTrash(t=>t.filter(x=>x.id!==id)); setSessions(ss=>[{...target, deletedAt:undefined}, ...ss]); } This eliminates the StrictMode double-execution duplication."
+  ],
+  "critical_code_review_comments": [
+    "restoreSession has a side effect (setSessions) inside setTrash updater — React docs explicitly warn against this. StrictMode reveals the bug in dev by double-invoking. Same anti-pattern check: verify deleteSession also — it calls setTrash inside setSessions updater which would similarly duplicate on delete. Need to verify but likely the same class of bug (I observed 4 sessions after seed=3 + delete + restore).",
+    "NBackSettings rounds/warmup input onChange uses Math.max(5, Number(e.target.value) || 5) which prevents user from clearing the field to type a new value — the min clamp fires on every keystroke and produces jumpy UX. Not critical, but tests failed to lower rounds on one attempt because the input didn't cleanly accept the new value after triple-click select. Consider clamping onBlur.",
+    "React.StrictMode is enabled — all state updater functions must be pure. Audit other slices (savePreset, deletePreset, addGoal) to ensure no cross-slice side effects inside setState updaters.",
+    "TaskRunner does not clear timers before unmount consistently (NBack Runner and PASAT Runner both use refs for timers — OK, but if user hits exit mid-trial the audio/beeps may still fire). Consider stopSpeaking + clearTimeout on unmount effect."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A", "frontend": "≈95% (18/19 verified flows PASS, 1 CRITICAL bug on restore)" },
+  "test_credentials": "None — local-only app",
+  "seed_data_creation": "Seeded 3 sessions (nback/pasat/memorySpan) and 1 preset directly via localStorage in test 3 to exercise Presets/Sessions/Analytics/Goals pages deterministically without waiting on runners.",
+  "retest_needed": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All routes and data-testids are wired correctly. Persistence works. When testing runners: default nback rounds is 22 (20+2 warmup) — set to small values (rounds=6, stim=300, isi=400) via triple-click + type to complete a session in <10s. Rounds input has Math.max(5,...) so any value <5 becomes 5. To seed data quickly, inject into localStorage keys neuroforge:v1:sessions and neuroforge:v1:presets and reload. StrictMode is enabled — watch for double-invocation bugs. Restoring from trash currently duplicates the session (see action_items).",
+  "rca of the issue": "restoreSession bug — /app/frontend/src/lib/store.js:61-70. The functional updater passed to setTrash contains a call to setSessions((ss) => [rest, ...ss]). React executes this inner updater once per outer updater call. In development with <React.StrictMode>, updater functions are intentionally invoked twice to surface side effects, so setSessions is queued twice → the restored session is prepended twice to sessions. Reproduction: 1) seed 3 sessions in localStorage 2) delete one via Sessions page 3) toggle trash 4) click restore. Expected: 3 sessions in the list. Actual: 4 sessions (duplicated). Mitigation: move setSessions outside the setTrash updater, or use useEffect on trash to react to restore intent, or (best) compute target from a ref/state read outside both setters and dispatch both updates as independent, pure functional updates."
+}
