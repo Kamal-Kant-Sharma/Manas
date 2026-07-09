@@ -11,6 +11,7 @@ import PASATSettings from "../tasks/pasat/Settings";
 import MemorySpanSettings from "../tasks/memorySpan/Settings";
 import TaskSwitchingSettings from "../tasks/taskSwitching/Settings";
 import OSPANSettings from "../tasks/ospan/Settings";
+import CorsiSettings from "../tasks/corsi/Settings";
 import { toast } from "sonner";
 
 const SETTINGS_COMPONENT = {
@@ -19,6 +20,7 @@ const SETTINGS_COMPONENT = {
   memorySpan: MemorySpanSettings,
   taskSwitching: TaskSwitchingSettings,
   ospan: OSPANSettings,
+  corsi: CorsiSettings,
 };
 
 export default function TaskLauncher() {

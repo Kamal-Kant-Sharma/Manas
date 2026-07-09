@@ -70,6 +70,11 @@ const memorySpan = {
   short: "Sequence recall · working memory capacity",
   color: "hsl(var(--chart-2))",
   defaults: DEFAULT_MEMORY_SPAN,
+  domainContributions: {
+    shortTermMemory: 1.0,
+    workingMemory:   0.7,
+    attention:       0.4,
+  },
   describeConfig(cfg) {
     return `${cfg?.stimulus ?? "?"} · ${cfg?.recall ?? "?"} · from ${cfg?.startLength ?? "?"}`;
   },

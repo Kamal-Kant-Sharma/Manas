@@ -95,6 +95,13 @@ const pasat = {
   short: "Paced serial addition · attention & speed",
   color: "hsl(var(--chart-4))",
   defaults: DEFAULT_PASAT,
+  domainContributions: {
+    workingMemory:    0.8,
+    mentalArithmetic: 1.0,
+    attention:        0.8,
+    processingSpeed:  0.7,
+    sustainedAttention:0.6,
+  },
   describeConfig(cfg) {
     const ops = cfg?.operations || [];
     const mode = cfg?.operationMode || "single";

@@ -137,6 +137,13 @@ const ospan = {
   short: "Working memory · memorize + distractor + recall",
   color: "hsl(var(--chart-6))",
   defaults: DEFAULT_OSPAN,
+  domainContributions: {
+    workingMemory:     1.0,
+    executiveFunction: 0.7,
+    attention:         0.5,
+    mentalArithmetic:  0.4,
+    shortTermMemory:   0.4,
+  },
   describeConfig(cfg) {
     return `${cfg?.itemType ?? "letters"} · ${cfg?.recall ?? "forward"} · ${cfg?.distractorTypes?.join("+")} · from ${cfg?.startLength ?? 3}`;
   },

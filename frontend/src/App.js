@@ -12,6 +12,9 @@ import Sessions from "./pages/Sessions";
 import Presets from "./pages/Presets";
 import Goals from "./pages/Goals";
 import Settings from "./pages/Settings";
+import CognitiveProfile from "./pages/CognitiveProfile";
+import Circadian from "./pages/Circadian";
+import Recommendations from "./pages/Recommendations";
 import { AppProvider } from "./lib/store";
 
 export default function App() {
@@ -25,6 +28,9 @@ export default function App() {
               <Route path="tasks" element={<TasksIndex />} />
               <Route path="tasks/:taskId" element={<TaskLauncher />} />
               <Route path="analytics" element={<Analytics />} />
+              <Route path="circadian" element={<Circadian />} />
+              <Route path="profile" element={<CognitiveProfile />} />
+              <Route path="recommendations" element={<Recommendations />} />
               <Route path="sessions" element={<Sessions />} />
               <Route path="presets" element={<Presets />} />
               <Route path="goals" element={<Goals />} />

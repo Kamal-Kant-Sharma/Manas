@@ -6,6 +6,7 @@ import pasat from "./pasat/module";
 import memorySpan from "./memorySpan/module";
 import taskSwitching from "./taskSwitching/module";
 import ospan from "./ospan/module";
+import corsi from "./corsi/module";
 
 export const TASKS = {
   [nback.id]: nback,
@@ -13,6 +14,7 @@ export const TASKS = {
   [memorySpan.id]: memorySpan,
   [taskSwitching.id]: taskSwitching,
   [ospan.id]: ospan,
+  [corsi.id]: corsi,
 };
 
 export const TASK_LIST = Object.values(TASKS);

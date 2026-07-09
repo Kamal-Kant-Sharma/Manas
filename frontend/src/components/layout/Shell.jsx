@@ -1,12 +1,15 @@
 import React from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Activity, BarChart3, Bookmark, FlaskConical, Home, Settings2, Target, Trash2 } from "lucide-react";
+import { Activity, BarChart3, Bookmark, Clock, Compass, FlaskConical, Home, Settings2, Sparkles, Target } from "lucide-react";
 import { useApp } from "../../lib/store";
 
 const NAV = [
   { to: "/", icon: Home, label: "Dashboard", exact: true, testId: "nav-dashboard" },
   { to: "/tasks", icon: FlaskConical, label: "Tasks", testId: "nav-tasks" },
+  { to: "/profile", icon: Sparkles, label: "Profile", testId: "nav-profile" },
+  { to: "/recommendations", icon: Compass, label: "Coach", testId: "nav-recommendations" },
   { to: "/analytics", icon: BarChart3, label: "Analytics", testId: "nav-analytics" },
+  { to: "/circadian", icon: Clock, label: "Circadian", testId: "nav-circadian" },
   { to: "/sessions", icon: Activity, label: "Sessions", testId: "nav-sessions" },
   { to: "/presets", icon: Bookmark, label: "Presets", testId: "nav-presets" },
   { to: "/goals", icon: Target, label: "Goals", testId: "nav-goals" },

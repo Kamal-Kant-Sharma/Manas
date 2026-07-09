@@ -180,6 +180,14 @@ const taskSwitching = {
   short: "Cognitive flexibility · switch cost",
   color: "hsl(var(--chart-5))",
   defaults: DEFAULT_TASK_SWITCHING,
+  domainContributions: {
+    cognitiveFlexibility: 1.0,
+    executiveFunction:    0.8,
+    attention:            0.6,
+    selectiveAttention:   0.5,
+    inhibitoryControl:    0.4,
+    processingSpeed:      0.4,
+  },
   describeConfig(cfg) {
     const rules = (cfg?.quadrants || []).map((q) => getTaskType(q.type)?.label || "?");
     const unique = Array.from(new Set(rules));

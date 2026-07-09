@@ -7,6 +7,7 @@ import PASATRunner from "../tasks/pasat/Runner";
 import MemorySpanRunner from "../tasks/memorySpan/Runner";
 import TaskSwitchingRunner from "../tasks/taskSwitching/Runner";
 import OSPANRunner from "../tasks/ospan/Runner";
+import CorsiRunner from "../tasks/corsi/Runner";
 import SessionSummary from "./SessionSummary";
 import { toast } from "sonner";
 
@@ -16,6 +17,7 @@ const RUNNER = {
   memorySpan: MemorySpanRunner,
   taskSwitching: TaskSwitchingRunner,
   ospan: OSPANRunner,
+  corsi: CorsiRunner,
 };
 
 export default function TaskRunner() {

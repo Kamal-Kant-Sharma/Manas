@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 3 (Cognitive Profile / Circadian / Recommendations / Corsi task) end-to-end frontend testing complete. All 12 requested test flows pass. Corsi task runs to completion and persists sessions. Profile, Circadian, and Recommendations render fully with seeded data and show correct empty states.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "All pages that mount recharts inside conditionally-rendered flex/lg-grid columns (Circadian hourly-*, profile-trend, domain-radar)", "issues": ["Console emits recurring recharts warnings: 'width(-1) and height(-1) of chart should be greater than 0'. Cosmetic only — charts render correctly after initial mount, but the warnings are noisy in production console. Cause is ResponsiveContainer inside a flex/grid child that briefly reports zero size on first paint. Suggest setting explicit minWidth/minHeight on the wrapper div or removing the console.warn suppression."]}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_3.json"],
+  "action_items": [
+    "Optional: reduce recharts 'width(-1)/height(-1)' console noise by giving the ResponsiveContainer wrapper a minHeight (e.g., style={{width:'100%', minHeight: 200}}) instead of a fixed-height parent that renders before layout resolves.",
+    "Consider: when suggestedTasks is empty because top focus domains have no registered task contributions (e.g., all top-3 focus are unmeasured non-task domains like Reasoning/Sustained Attention), the UI still shows an empty grid under Today's Focus. Currently intentional per problem-statement note, but a small 'no tasks map to your top focus domains — try broadening training' hint would improve UX.",
+    "Corsi Runner: when startLength == maxLength AND the very first trial succeeds, the code increments length past maxLength immediately (nextLen > config.maxLength → finish). This works but means user gets exactly 1 attempt before session ends. Fine for a smoke test, but for research users this edge case could be documented or the engine could allow trialsPerLength successful trials before stepping up."
+  ],
+  "critical_code_review_comments": [
+    "CognitiveProfile.jsx line 34: recallEntriesToSessions() is regenerated inside useMemo whenever `sessions` changes. It reads loadRecallState() (localStorage) each time, so recall-derived pseudo-sessions won't refresh when the user completes a daily recall on another tab. Non-blocking, but could subscribe to storage events or move loadRecallState into a proper state slice.",
+    "Recommendations.jsx line 22: same pattern — recallEntriesToSessions() reads localStorage inside useMemo but the dep array only watches `sessions`. Recall entries won't reflect until a new session is added.",
+    "domains.js sessionScore(): consistency = 0.5 default when stdev/rt missing. For Corsi (stdev fixed to 0 in Runner.finish summary) this gives consistency=1 always, which may inflate Corsi's contribution to profile. Consider using per-attempt RT stdev instead of the summary field (currently all attempts.rtMs are the same because rt.stdev is hardcoded to 0 in Corsi Runner line 115).",
+    "Corsi Runner line 115: rt.stdev is hardcoded to 0 and min/max/median all equal mean, since it's computed from `attempts.reduce(...) / total`. This throws off any downstream consistency-based calculations (see previous point). Should be computed from attempts[].rtMs actual stdev.",
+    "Circadian.jsx line 48: consistency = stddev(rtValues) / (b.rtSum / b.rtN). If rtN < 2, stddev returns 0 and this becomes 0 — but there is only a `> 1` guard for rtValues.length; when only one session exists in an hour bucket, consistency is null (correct). Non-blocking.",
+    "recommendations.js line 84: percentage renormalization iterates twice — first raw percentages, then re-rounded. Rounding twice can cause the sum to drift 98–102%. Consider a single Math.round of (weight/sum)*100 or use largest-remainder method for clean display.",
+    "Corsi Runner: when phase transitions from present → recall, `submitRecall([...tappedRef.current])` scheduled via setTimeout(config.recallTimeoutMs) will fire even if the user submits early, unless clearTimeout(recallTimeoutRef.current) has run. It IS cleared at the top of submitRecall (line 68) — GOOD, so no double-submit.",
+    "Corsi Runner: onTap does not check if `idx` is a valid index within the current sequence-length window; user can tap any of the 9 blocks freely even if sequence has length 3 (that's the design — accuracy is measured, extra taps aren't allowed because tapped.length >= sequence.length auto-submits). Correct.",
+    "Circadian.jsx line 197: opacity = Math.max(0.2, cell.acc || 0). cell.acc is 0..1, so opacity for accuracy 0.85 → 0.85, for 0.15 → 0.2. This works but colors are subtle at low accuracy. Consider mapping to a wider opacity range (0.15..0.95) for higher contrast.",
+    "Shell.jsx sidebar NAV: 10 items in a 240px sidebar with py-2 each. On short viewports the bottom profile-block could overlap. Not tested explicitly but noted."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (no backend in scope)", "frontend": "100% (12/12 requested test flows PASS)"},
+  "test_credentials": "None — local-only app, no auth.",
+  "seed_data_creation": "Via page.evaluate before /profile & /recommendations & /circadian: (a) 30 pseudo-sessions across nback/pasat/memorySpan/taskSwitching/ospan/corsi spanning last 20 days at localStorage key 'neuroforge:v1:sessions'; (b) 5 dailyRecall history entries at 'neuroforge:v1:dailyRecall'; (c) 20 daily context entries at 'neuroforge:v1:dailyContext'; (d) 1 active goal at 'neuroforge:v1:goals'. Cleared with localStorage.clear() before empty-state assertions.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iteration 3 fully verified. New data-testids in use: task-card-corsi, corsi-settings, corsi-cfg-blocks, corsi-cfg-layout, corsi-cfg-recall, corsi-runner, corsi-board, corsi-block-0..8, corsi-exit-btn, nav-profile, nav-recommendations, nav-circadian (plus m-nav-* mobile variants), overall-score, domain-radar, profile-trend, domain-bars, movers-strongest, movers-weakest, movers-improving, declining-alert, todays-focus, rest-day-card, weekly-schedule, plateauing-list, improving-list, declining-list, goal-hint, suggest-{taskId}, insight-{kind}, context-log-card, context-input-{sleepHours|sleepQuality|energy|mood|stress|caffeineMg}, context-save-btn, correlations-card, hourly-accuracy, hourly-rt, hourly-volume, heatmap, insights-card. Verified counts: 6 task cards, 9 corsi blocks, 6 context inputs, 7-day weekly schedule. Corsi runner writes a real session to localStorage key 'neuroforge:v1:sessions' — during my test the corsi session count in storage was 6 (5 seeded + 1 from live Runner). Empty-state on /profile shows 'No profile data yet' when localStorage is cleared. Recommendations page 'Suggested Tasks' can render 0 cards when top-3 focus domains happen to be unmeasured domains without registered task contributions — this is INTENDED per problem-statement note about Long-Term Memory. All charts use recharts and emit width(-1)/height(-1) warnings on first paint — visual output is correct, warnings are cosmetic.",
+  "rca of the issue": "N/A — no functional bugs. Recharts console warnings are pre-existing and cosmetic. Empty suggestedTasks in Recommendations when unmeasured focus domains dominate is per-spec (see problem_statement.other_misc_info)."
+}

@@ -116,6 +116,13 @@ const nback = {
   short: "Working memory · multi-stream",
   color: "hsl(var(--chart-1))",
   defaults: DEFAULT_NBACK,
+  domainContributions: {
+    workingMemory:     1.0,
+    attention:         0.7,
+    sustainedAttention:0.6,
+    processingSpeed:   0.5,
+    executiveFunction: 0.3,
+  },
   describeConfig(cfg) {
     const streams = cfg?.streams || {};
     const active = Object.keys(streams).filter((k) => streams[k]);
