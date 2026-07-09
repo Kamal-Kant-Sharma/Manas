@@ -117,9 +117,10 @@ const nback = {
   color: "hsl(var(--chart-1))",
   defaults: DEFAULT_NBACK,
   describeConfig(cfg) {
-    const active = Object.keys(cfg.streams).filter((k) => cfg.streams[k]);
+    const streams = cfg?.streams || {};
+    const active = Object.keys(streams).filter((k) => streams[k]);
     const streamName = active.length === 1 ? "Single" : active.length === 2 ? "Dual" : active.length === 3 ? "Triple" : `${active.length}x`;
-    return `${streamName} ${cfg.n}-back · ${active.map((k) => NBACK_STREAMS.find((s) => s.key === k)?.label).join(" + ")} · ${cfg.rounds} trials`;
+    return `${streamName} ${cfg?.n ?? "?"}-back · ${active.map((k) => NBACK_STREAMS.find((s) => s.key === k)?.label).join(" + ") || "—"} · ${cfg?.rounds ?? "?"} trials`;
   },
   summarizeKPI(session) {
     return [

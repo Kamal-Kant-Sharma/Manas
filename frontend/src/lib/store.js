@@ -51,23 +51,19 @@ export function AppProvider({ children }) {
   }, []);
 
   const deleteSession = useCallback((id) => {
-    setSessions((prev) => {
-      const target = prev.find((s) => s.id === id);
-      if (target) setTrash((t) => [{ ...target, deletedAt: new Date().toISOString() }, ...t]);
-      return prev.filter((s) => s.id !== id);
-    });
-  }, []);
+    const target = sessions.find((s) => s.id === id);
+    if (!target) return;
+    setTrash((t) => [{ ...target, deletedAt: new Date().toISOString() }, ...t]);
+    setSessions((prev) => prev.filter((s) => s.id !== id));
+  }, [sessions]);
 
   const restoreSession = useCallback((id) => {
-    setTrash((prev) => {
-      const target = prev.find((s) => s.id === id);
-      if (target) {
-        const { deletedAt, ...rest } = target;
-        setSessions((ss) => [rest, ...ss]);
-      }
-      return prev.filter((s) => s.id !== id);
-    });
-  }, []);
+    const target = trash.find((s) => s.id === id);
+    if (!target) return;
+    const { deletedAt, ...rest } = target;
+    setTrash((prev) => prev.filter((s) => s.id !== id));
+    setSessions((ss) => [rest, ...ss]);
+  }, [trash]);
 
   const purgeTrash = useCallback(() => setTrash([]), []);
 

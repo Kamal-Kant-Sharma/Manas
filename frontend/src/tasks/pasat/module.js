@@ -76,9 +76,12 @@ const pasat = {
   color: "hsl(var(--chart-4))",
   defaults: DEFAULT_PASAT,
   describeConfig(cfg) {
-    const opsLabel = cfg.operationMode === "single" ? PASAT_OPS.find((o) => o.key === cfg.operations[0])?.label
-      : `${cfg.operationMode} (${cfg.operations.length})`;
-    return `${cfg.rounds} trials · ${cfg.intervalMs}ms · ${opsLabel}`;
+    const ops = cfg?.operations || [];
+    const mode = cfg?.operationMode || "single";
+    const opsLabel = mode === "single"
+      ? (PASAT_OPS.find((o) => o.key === ops[0])?.label || "—")
+      : `${mode} (${ops.length})`;
+    return `${cfg?.rounds ?? "?"} trials · ${cfg?.intervalMs ?? "?"}ms · ${opsLabel}`;
   },
   summarizeKPI(session) {
     return [

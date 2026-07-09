@@ -71,7 +71,7 @@ const memorySpan = {
   color: "hsl(var(--chart-2))",
   defaults: DEFAULT_MEMORY_SPAN,
   describeConfig(cfg) {
-    return `${cfg.stimulus} · ${cfg.recall} · from ${cfg.startLength}`;
+    return `${cfg?.stimulus ?? "?"} · ${cfg?.recall ?? "?"} · from ${cfg?.startLength ?? "?"}`;
   },
   summarizeKPI(session) {
     return [
