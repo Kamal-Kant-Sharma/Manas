@@ -1,0 +1,115 @@
+{
+  "typography": {
+    "headings": "Chivo",
+    "body": "IBM Plex Sans",
+    "monospace": "JetBrains Mono",
+    "banned_fonts": ["Inter", "Roboto", "Open Sans", "Lato", "Space Grotesk"],
+    "hierarchy": {
+      "H1": "text-4xl sm:text-5xl tracking-tight font-light",
+      "H2": "text-2xl sm:text-3xl tracking-tight font-medium",
+      "H3": "text-xl sm:text-2xl font-medium",
+      "H4": "text-lg font-medium",
+      "body": "text-sm leading-relaxed",
+      "labels_overlines": "text-xs tracking-[0.2em] uppercase font-bold text-muted-foreground",
+      "data_metrics": "text-3xl sm:text-5xl font-mono tracking-tighter"
+    }
+  },
+  "colors": {
+    "theme": "dark",
+    "archetype": "Swiss & High-Contrast / Retro-Futurism Terminal",
+    "inspiration": "Tokyo Night IDE",
+    "palette": {
+      "background": "#1a1b26",
+      "card": "#24283b",
+      "popover": "#24283b",
+      "border": "#414868",
+      "input": "#1f2335",
+      "primary": "#7aa2f7",
+      "primary_foreground": "#1a1b26",
+      "secondary": "#292e42",
+      "secondary_foreground": "#c0caf5",
+      "muted": "#383e59",
+      "muted_foreground": "#9aa5ce",
+      "accent": "#3d59a1",
+      "accent_foreground": "#ffffff",
+      "destructive": "#f7768e",
+      "destructive_foreground": "#1a1b26",
+      "foreground": "#c0caf5"
+    },
+    "charts_multi_stream": [
+      "#7aa2f7",
+      "#bb9af7",
+      "#9ece6a",
+      "#e0af68",
+      "#f7768e",
+      "#7dcfff",
+      "#ff9e64"
+    ],
+    "forbidden_colors": ["#7351B7", "#1B93A4", "transparent (over content)"]
+  },
+  "visual enhancers": {
+    "surfaces": "Grid Borders (The 'Technical' Look). Use sharp edges with a maximum border-radius of 4px (rounded-sm). Use flat solid surfaces. Absolutely NO GLASSMORPHISM to prevent visual refraction of scientific data.",
+    "shadows": "Minimal. Rely on 1px borders instead of shadows to define hierarchy. On hover, use a very subtle drop shadow or an inner border glow.",
+    "borders": "1px solid #414868. Use border-collapse for metrics to create an IDE-like data grid."
+  },
+  "grids": {
+    "dashboard": "Bento Grid Protocol (Mode B: High Density). grid-cols-1 md:grid-cols-3 lg:grid-cols-4. Tight gaps (gap-4). Every pixel utilized.",
+    "task_screen": "Centralized focused layout. max-w-4xl mx-auto, high negative space around the central stimulus grid.",
+    "n_back_grid": "Dynamic grid-cols-3 to grid-cols-9 based on settings. Perfect squares with 1px borders."
+  },
+  "layouts": {
+    "home_dashboard": "Sidebar navigation (icons + text). Top header with current streak and quick stats. Main content area packed with recent sessions, PRs, and weekly activity charts.",
+    "settings_form": "Dense, 2-column layout for desktop. VSCode settings style. Label on left, control on right, separated by subtle borders.",
+    "task_active": "Immersive fullscreen-like view. Hide sidebar. Stimuli center stage. Progress/Stats minimized to top/bottom edges.",
+    "analytics": "Massive grid of charts. Line charts spanning full width, radar/pie taking half width."
+  },
+  "motion": {
+    "transitions": "Fast, precise, IDE-like. 150ms ease-in-out. DO NOT use 'transition-all'. Target specific properties.",
+    "interactions": "Buttons and active states get a subtle scaling (-translate-y-[1px]) or an inset border highlight.",
+    "task_stimuli": "Zero animation on stimulus appearance to ensure exact scientific timing and reaction time measurement. Instant toggle.",
+    "focus": "2px solid #7aa2f7 offset by 2px (background color)."
+  },
+  "accessibility": {
+    "contrast": "Ensure APCA standards. All text over dark backgrounds must be legible.",
+    "testing": "All interactive elements MUST have a data-testid attribute formatted as kebab-case and role-based (e.g., data-testid='start-session-button').",
+    "motion": "Respect prefers-reduced-motion. Add aria-hidden='true' to purely decorative elements."
+  },
+  "media": {
+    "icons": "lucide-react. Stroke width 1.5 to match the technical, precise aesthetic.",
+    "empty_states": "Use huge, low-opacity (opacity-10) lucide-react icons instead of illustrations to maintain the professional tool vibe."
+  },
+  "image_urls": [
+    {
+      "url": "https://images.unsplash.com/photo-1709626011485-6fe000ea2dbc?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwxfHxkYXJrJTIwYWJzdHJhY3QlMjBnZW9tZXRyaWMlMjB0ZWNobm9sb2d5JTIwcGF0dGVybnxlbnwwfHx8fDE3ODM1OTg0MTB8MA&ixlib=rb-4.1.0&q=85",
+      "category": "Hero / Empty State Texture",
+      "description": "Dark geometric pattern to be used as a very low opacity (e.g., opacity-5) background texture behind hero or empty state sections to prevent flat black monotony."
+    }
+  ],
+  "components_instructions": {
+    "button": "Sharp corners (rounded-sm). Primary uses #7aa2f7 background with #1a1b26 text. Outline uses border with transparent background and explicitly defined text color on hover.",
+    "input": "Flat, #1f2335 background. 1px border. On focus, border changes to primary color. High density.",
+    "card": "Background #24283b, 1px solid border #414868. No default shadow.",
+    "charts": "Use Recharts. LineChart, BarChart, ScatterChart, RadarChart, Heatmap. Tooltips must have dark backgrounds (#24283b) and match IDE theme.",
+    "tables": "Dense rows. Hover states light up the row slightly (#292e42). JetBrains Mono for all numeric columns."
+  },
+  "instructions_to_main_agent": "Implement a pure offline, browser-storage-only architecture. Ensure all React files use the .js extension. Adopt the Tokyo Night dark IDE aesthetic strictly. Avoid clutter and generic designs.",
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. In frontend design, this creates what users call the 'AI slop' aesthetic. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use solid backgrounds. DO NOT USE glass-morphism effects for this scientific application. This overrides any generic glassmorphism rules.",
+    "You MUST NOT apply universal transition. Eg: `transition: all`. This results in breaking transforms. Always add transitions for specific interactive elements like button, input excluding transforms.",
+    "You MUST NOT center align the app container, ie do not add `.App { text-align: center; }` in the css file. This disrupts the human natural reading flow of text.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style. (Use sharp, rounded-sm for this IDE theme).",
+    "NEVER: use AI assistant Emoji characters like 🤖🧠💭💡🔮🎯 etc for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable for layouts, but keep data tables and forms dense.",
+    "Subtle grain textures, custom cursors, selection states, and loading animations: separates good from extraordinary.",
+    "Use `sonner` for toasts. Sonner component are located in `/app/src/components/ui/sonner.js`.",
+    "All interactive and key informational elements MUST include a `data-testid` attribute to facilitate robust automated testing.",
+    "Prioritize using pre-existing components from src/components/ui when applicable.",
+    "DO NOT use a completely transparent background on headers or overlays over content.",
+    "Main agent relies on these image URLs. Missing categories = main agent will use placeholder text which is FORBIDDEN. Use lucide-react icons instead of emojis."
+  ]
+}
