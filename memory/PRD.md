@@ -19,19 +19,6 @@ Pure React frontend, no backend. Modular task registry — each task is self-con
 - **Researcher**: needs reproducibility (seed), full trial-level data, export CSV/JSON, custom protocols
 
 ## What's Been Implemented (2026-02-09)
-- Home dashboard: streak, total training time, best accuracy, fastest RT, weekly activity bar chart, quick-start cards, recent sessions table, personal records, saved presets
-- **N-Back task**: multi-stream (8 stream types: position/color/number/letter/shape/symbol/audioLetter/audioNumber), 3×3 to 9×9 grid, adjustable N, stimulus/ISI/reaction-window timing, target probability, warm-up trials, per-stream response buttons + keyboard hotkeys, per-stream confusion matrices + radar chart
-- **PASAT task**: paced serial addition with audio+visual, 6 operations (add/sub/mul/div/mod/avg), single/alternating/random modes, adjustable range, negatives, decimals, per-operation breakdown
-- **Memory Span task**: 8 stimulus types (digits/letters/words/colors/shapes/positions/audio-*), 5 recall modes (forward/backward/asc/desc/alphabetical), adaptive length progression, position + order errors
-- **Analytics**: line chart (accuracy timeline), line chart (mean RT timeline), bar chart (daily volume), pie chart (task distribution), scatter (accuracy × RT), filters by task + date range (7/30/90/365/all)
-- **Session Summary**: KPIs (accuracy/F1/precision/recall/mean/median/min/σ), confusion matrix cells, rolling accuracy line, RT histogram, per-stream radar, PASAT per-op accuracy, memory-span score
-- **Sessions page**: search, task filter, delete → trash → restore, purge trash, JSON export, CSV export, JSON import, session detail dialog
-- **Presets**: save current config with name, load into launcher, delete, run direct from card
-- **Goals**: set targets on accuracy / meanRT / N-level / max span / sessions count; auto-evaluated against current data; achieved goals get green border + check icon
-- **Settings**: profile name, sound toggle, voice selector + test button, reduced motion, clear all data
-- **Design**: Tokyo Night dark IDE palette, Chivo (display) / IBM Plex Sans (body) / JetBrains Mono (metrics), 1px flat borders, grain texture overlay, no glassmorphism, sharp 4px corners, subtle radial background wash, custom scrollbar
-- Sidebar navigation with active-item accent stripe; mobile top-nav with horizontal scroll
-- Runners hide chrome for immersive gameplay
 
 ## Prioritized Backlog
 

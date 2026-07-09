@@ -113,7 +113,7 @@ export default function SessionSummary({ session, onDone, onRepeat }) {
           {/* Rolling accuracy */}
           {rollingAcc.length > 0 && (
             <div className="border border-border p-5 rounded-sm bg-card">
-              <div className="overline mb-3">rolling accuracy · window=5</div>
+              <div className="overline mb-3">rolling accuracy · smoothing=5</div>
               <div style={{ width: "100%", height: 200 }}>
                 <ResponsiveContainer>
                   <LineChart data={rollingAcc}>
