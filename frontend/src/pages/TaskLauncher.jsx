@@ -9,12 +9,16 @@ import { useApp } from "../lib/store";
 import NBackSettings from "../tasks/nback/Settings";
 import PASATSettings from "../tasks/pasat/Settings";
 import MemorySpanSettings from "../tasks/memorySpan/Settings";
+import TaskSwitchingSettings from "../tasks/taskSwitching/Settings";
+import OSPANSettings from "../tasks/ospan/Settings";
 import { toast } from "sonner";
 
 const SETTINGS_COMPONENT = {
   nback: NBackSettings,
   pasat: PASATSettings,
   memorySpan: MemorySpanSettings,
+  taskSwitching: TaskSwitchingSettings,
+  ospan: OSPANSettings,
 };
 
 export default function TaskLauncher() {

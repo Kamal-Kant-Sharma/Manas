@@ -1,15 +1,31 @@
-// PASAT — Paced Auditory Serial Addition Test.
-// Each trial: a number is presented (audio + visual). User adds it to the PREVIOUS number.
-// Also supports subtraction/multiplication/etc. and alternating/random operations.
+// PASAT — Paced Auditory Serial Addition Test with configurable rolling window.
+// Each trial: a number is presented. User applies the operation across the last `windowSize` numbers.
+// window=2 → classic PASAT (op previous, current); window=3 → op previous 2, current; etc.
+
+function gcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { [a, b] = [b, a % b]; } return a; }
+function lcm(a, b) { if (a === 0 || b === 0) return 0; return Math.abs(a * b) / gcd(a, b); }
 
 export const PASAT_OPS = [
-  { key: "add", label: "Add",       fn: (a, b) => a + b, symbol: "+" },
-  { key: "sub", label: "Subtract",  fn: (a, b) => a - b, symbol: "−" },
-  { key: "mul", label: "Multiply",  fn: (a, b) => a * b, symbol: "×" },
-  { key: "div", label: "Divide",    fn: (a, b) => b === 0 ? 0 : a / b, symbol: "÷" },
-  { key: "mod", label: "Modulo",    fn: (a, b) => b === 0 ? 0 : a % b, symbol: "%" },
-  { key: "avg", label: "Average",   fn: (a, b) => (a + b) / 2, symbol: "μ" },
+  { key: "add", label: "Add",       fn: (a, b) => a + b,                    symbol: "+" },
+  { key: "sub", label: "Subtract",  fn: (a, b) => a - b,                    symbol: "−" },
+  { key: "mul", label: "Multiply",  fn: (a, b) => a * b,                    symbol: "×" },
+  { key: "div", label: "Divide",    fn: (a, b) => b === 0 ? 0 : a / b,      symbol: "÷" },
+  { key: "mod", label: "Modulo",    fn: (a, b) => b === 0 ? 0 : a % b,      symbol: "%" },
+  { key: "avg", label: "Average",   fn: (a, b) => (a + b) / 2,              symbol: "μ" },
+  { key: "gcd", label: "GCD",       fn: (a, b) => gcd(a, b),                symbol: "∧" },
+  { key: "lcm", label: "LCM",       fn: (a, b) => lcm(a, b),                symbol: "∨" },
 ];
+
+// Reduce a window of numbers using an op. For non-associative ops (sub/div/mod) this is left-fold.
+function reduceWindow(nums, opKey) {
+  const op = PASAT_OPS.find((o) => o.key === opKey) || PASAT_OPS[0];
+  if (opKey === "avg") {
+    // avg over the entire window (not pairwise avg)
+    const sum = nums.reduce((s, x) => s + x, 0);
+    return sum / nums.length;
+  }
+  return nums.reduce((acc, x, i) => (i === 0 ? x : op.fn(acc, x)));
+}
 
 export const DEFAULT_PASAT = {
   taskId: "pasat",
@@ -22,7 +38,8 @@ export const DEFAULT_PASAT = {
   maxNumber: 9,
   allowNegatives: false,
   decimals: false,
-  operations: ["add"],    // list of ops used
+  windowSize: 2,          // NEW: how many recent numbers are combined
+  operations: ["add"],
   operationMode: "single", // single | alternating | random
   adaptive: false,
   seed: null,
@@ -41,6 +58,7 @@ function rng(seed) { return seed == null ? Math.random : mulberry32(seed); }
 export function generatePASAT(cfg) {
   const r = rng(cfg.seed);
   const ops = cfg.operations.length ? cfg.operations : ["add"];
+  const W = Math.max(2, cfg.windowSize || 2);
   const numbers = [];
   const opsPerTrial = [];
   for (let i = 0; i < cfg.rounds; i++) {
@@ -58,15 +76,17 @@ export function generatePASAT(cfg) {
     else op = ops[Math.floor(r() * ops.length)];
     opsPerTrial.push(op);
   }
-  // Compute expected answer sequence (trial i >= 1: op(numbers[i-1], numbers[i]))
+  // Expected answer at index i is defined for i >= W-1: op-reduce(numbers[i-W+1..i]).
   const expected = numbers.map((n, i) => {
-    if (i === 0) return null;
+    if (i < W - 1) return null;
     const opKey = opsPerTrial[i];
-    const op = PASAT_OPS.find((o) => o.key === opKey) || PASAT_OPS[0];
-    const val = op.fn(numbers[i - 1], numbers[i]);
-    return cfg.decimals ? +val.toFixed(2) : Math.round(val);
+    const window = numbers.slice(i - W + 1, i + 1);
+    const val = reduceWindow(window, opKey);
+    if (cfg.decimals) return +val.toFixed(2);
+    // For div use rounding, for others int
+    return Math.round(val);
   });
-  return { numbers, ops: opsPerTrial, expected };
+  return { numbers, ops: opsPerTrial, expected, windowSize: W };
 }
 
 const pasat = {
@@ -81,14 +101,15 @@ const pasat = {
     const opsLabel = mode === "single"
       ? (PASAT_OPS.find((o) => o.key === ops[0])?.label || "—")
       : `${mode} (${ops.length})`;
-    return `${cfg?.rounds ?? "?"} trials · ${cfg?.intervalMs ?? "?"}ms · ${opsLabel}`;
+    const W = cfg?.windowSize ?? 2;
+    return `${cfg?.rounds ?? "?"} trials · window ${W} · ${cfg?.intervalMs ?? "?"}ms · ${opsLabel}`;
   },
   summarizeKPI(session) {
     return [
       { label: "Accuracy", value: session.summary?.metrics?.accuracy },
       { label: "Correct", value: session.summary?.correct, unit: "" },
       { label: "Mean RT", value: session.summary?.rt?.mean, unit: "ms" },
-      { label: "Rounds", value: session.config.rounds },
+      { label: "Window", value: session.config?.windowSize ?? 2 },
     ];
   },
 };

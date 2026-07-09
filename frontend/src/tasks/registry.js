@@ -4,11 +4,15 @@
 import nback from "./nback/module";
 import pasat from "./pasat/module";
 import memorySpan from "./memorySpan/module";
+import taskSwitching from "./taskSwitching/module";
+import ospan from "./ospan/module";
 
 export const TASKS = {
   [nback.id]: nback,
   [pasat.id]: pasat,
   [memorySpan.id]: memorySpan,
+  [taskSwitching.id]: taskSwitching,
+  [ospan.id]: ospan,
 };
 
 export const TASK_LIST = Object.values(TASKS);

@@ -184,10 +184,67 @@ export default function SessionSummary({ session, onDone, onRepeat }) {
 
         {/* Memory span extra */}
         {Number.isFinite(s.maxSpan) && (
-          <div className="border border-border p-5 rounded-sm bg-card">
-            <div className="overline mb-3">span</div>
-            <div className="metric text-5xl">{s.maxSpan}</div>
-            <div className="text-xs text-muted-foreground mt-1">Longest successful sequence</div>
+          <div className="border border-border p-5 rounded-sm bg-card grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div className="overline mb-3">max span</div>
+              <div className="metric text-5xl">{s.maxSpan}</div>
+              <div className="text-xs text-muted-foreground mt-1">Longest successful sequence</div>
+            </div>
+            {Number.isFinite(s.absoluteSpan) && (
+              <div>
+                <div className="overline mb-3">absolute span</div>
+                <div className="metric text-5xl">{s.absoluteSpan}</div>
+                <div className="text-xs text-muted-foreground mt-1">Σ lengths of perfect trials</div>
+              </div>
+            )}
+            {Number.isFinite(s.partialSpan) && (
+              <div>
+                <div className="overline mb-3">partial span</div>
+                <div className="metric text-5xl">{s.partialSpan}</div>
+                <div className="text-xs text-muted-foreground mt-1">Σ correct items across attempts</div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* OSPAN memory vs distractor breakdown */}
+        {Number.isFinite(s.memoryAccuracy) && Number.isFinite(s.distractorAccuracy) && (
+          <div className="border border-border p-5 rounded-sm bg-card" data-testid="ospan-breakdown">
+            <div className="overline mb-3">memory vs distractor</div>
+            <div className="grid grid-cols-3 gap-4">
+              <div><div className="text-xs text-muted-foreground">Memory only</div><div className="metric text-2xl mt-1 text-[hsl(var(--chart-2))]">{pct(s.memoryAccuracy)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Distractor only</div><div className="metric text-2xl mt-1 text-[hsl(var(--chart-4))]">{pct(s.distractorAccuracy)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Combined</div><div className="metric text-2xl mt-1 text-[hsl(var(--chart-3))]">{pct(s.combinedScore)}</div></div>
+            </div>
+          </div>
+        )}
+
+        {/* Task-Switching switch cost */}
+        {Number.isFinite(s.switchCostMs) && (
+          <div className="border border-border p-5 rounded-sm bg-card" data-testid="ts-switch-cost">
+            <div className="overline mb-3">switch cost</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div><div className="text-xs text-muted-foreground">Switch cost</div><div className="metric text-2xl mt-1" style={{ color: s.switchCostMs > 0 ? "hsl(var(--destructive))" : "hsl(var(--chart-3))" }}>{fms(s.switchCostMs)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Switch RT (mean)</div><div className="metric text-2xl mt-1">{fms(s.meanSwitchRT)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Repeat RT (mean)</div><div className="metric text-2xl mt-1">{fms(s.meanRepeatRT)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Switch / Repeat trials</div><div className="metric text-2xl mt-1">{s.switchTrials}/{s.repeatTrials}</div></div>
+              <div><div className="text-xs text-muted-foreground">Switch accuracy</div><div className="metric text-lg mt-1">{pct(s.switchAccuracy)}</div></div>
+              <div><div className="text-xs text-muted-foreground">Repeat accuracy</div><div className="metric text-lg mt-1">{pct(s.repeatAccuracy)}</div></div>
+            </div>
+            {s.perRule && (
+              <div className="mt-4">
+                <div className="overline mb-2">per-rule accuracy</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {Object.entries(s.perRule).map(([k, v]) => (
+                    <div key={k} className="border border-border rounded-sm p-2">
+                      <div className="text-xs text-muted-foreground truncate">{k}</div>
+                      <div className="metric text-lg">{v.total ? pct(v.correct / v.total) : "—"}</div>
+                      <div className="text-xs text-muted-foreground">{v.correct}/{v.total}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -4,6 +4,7 @@ import { ArrowRight, Flame, Zap, Trophy, Clock, Brain } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import StatCard from "../components/common/StatCard";
 import EmptyState from "../components/common/EmptyState";
+import DailyChallenge from "../components/dailyRecall/DailyChallenge";
 import { Button } from "../components/ui/button";
 import { useApp } from "../lib/store";
 import { TASK_LIST, getTask } from "../tasks/registry";
@@ -62,6 +63,9 @@ export default function Home() {
       />
 
       <div className="p-6 md:p-10 space-y-8">
+        {/* Daily Delayed Recall */}
+        <DailyChallenge />
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard testId="stat-streak" label="Daily streak" value={<span className="flex items-baseline gap-1">{stats.streak}<span className="text-muted-foreground text-sm">d</span></span>} sub="consecutive training days" />
           <StatCard testId="stat-total-time" label="Total training" value={duration(stats.totalDurationMs)} sub={`${sessions.length} sessions`} />

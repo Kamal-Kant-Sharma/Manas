@@ -9,7 +9,7 @@ import { useApp } from "../../lib/store";
 
 export default function PASATRunner({ config, onFinish, onExit }) {
   const { settings } = useApp();
-  const { numbers, ops, expected } = useMemo(() => generatePASAT(config), [config]);
+  const { numbers, ops, expected, windowSize } = useMemo(() => generatePASAT(config), [config]);
   const [state, setState] = useState("countdown");
   const [countdown, setCountdown] = useState(3);
   const [trialIdx, setTrialIdx] = useState(0);
@@ -28,7 +28,7 @@ export default function PASATRunner({ config, onFinish, onExit }) {
 
   const submitAnswer = useCallback((autoTimeout = false) => {
     const idx = trialIdx;
-    if (idx <= 0) return;
+    if (idx < windowSize - 1) return;
     const rt = performance.now() - trialStartRef.current;
     const given = answer === "" ? null : Number(answer);
     const exp = expected[idx];
@@ -37,7 +37,7 @@ export default function PASATRunner({ config, onFinish, onExit }) {
       index: idx,
       op: ops[idx],
       presented: numbers[idx],
-      previous: numbers[idx - 1],
+      window: numbers.slice(Math.max(0, idx - windowSize + 1), idx + 1),
       expected: exp,
       given,
       correct,
@@ -49,7 +49,7 @@ export default function PASATRunner({ config, onFinish, onExit }) {
     });
     if (settings.soundEnabled) beep({ freq: correct ? 880 : 220, duration: 60, volume: 0.08 });
     setAnswer("");
-  }, [answer, trialIdx, expected, numbers, ops, settings.soundEnabled]);
+  }, [answer, trialIdx, expected, numbers, ops, settings.soundEnabled, windowSize]);
 
   // Trial loop
   useEffect(() => {
@@ -144,7 +144,9 @@ export default function PASATRunner({ config, onFinish, onExit }) {
             )}
             {!config.visual && <div className="overline">listen</div>}
             <div className="text-xs text-muted-foreground">
-              enter <span className="metric text-foreground">previous {currentOp.symbol} current</span>
+              {windowSize === 2
+                ? <>enter <span className="metric text-foreground">previous {currentOp.symbol} current</span></>
+                : <>combine <span className="metric text-foreground">last {windowSize}</span> with <span className="metric text-foreground">{currentOp.symbol}</span></>}
             </div>
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
               <Input

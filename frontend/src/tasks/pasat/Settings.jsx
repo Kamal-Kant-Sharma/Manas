@@ -35,6 +35,9 @@ export default function PASATSettings({ value, onChange }) {
         <Row label="Interval (ms)" hint="Time between number presentations">
           <Input type="number" min={500} max={10000} step={100} value={v.intervalMs} onChange={(e) => set({ intervalMs: Number(e.target.value) || 2400 })} className="metric" data-testid="pasat-cfg-interval" />
         </Row>
+        <Row label="Operation window" hint="How many recent numbers to combine (2 = classic PASAT)">
+          <Input type="number" min={2} max={8} value={v.windowSize ?? 2} onChange={(e) => set({ windowSize: Math.max(2, Math.min(8, Number(e.target.value) || 2)) })} className="metric" data-testid="pasat-cfg-window" />
+        </Row>
       </section>
 
       <section>

@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend-only E2E test of Neuroforge iteration 2. All 4 new features PASS end-to-end: (1) Task Switching launcher + runner + switch-cost summary, (2) OSPAN launcher + memorize→distractor(arithmetic)→recall + memory-vs-distractor breakdown summary, (3) PASAT rolling window (window=3) with updated header/hint and per-op accuracy on last W-1 valid trials, (4) Daily Delayed Recall dashboard card in both memorize and recall (backdated) modes, incl. skip, config, streak. Registry integration confirmed (Analytics + Sessions task filter list Task Switching & Operation Span). Persistence across page reloads confirmed for both task sessions and daily-recall state. No new critical bugs.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      { "screen": "SessionSummary (PASAT window=3, all-zero run)", "issues": ["Chart still labelled 'ROLLING ACCURACY · WINDOW=5' regardless of task's configured windowSize (=3 in test). Confusing wording since 'window' now means two different things in PASAT (rolling accuracy chart window vs. PASAT op window). Consider renaming the chart label to 'ROLLING ACCURACY · CHART WINDOW=5' or make the stat-chart window configurable per task."] }
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/iteration_2.json"
+  ],
+  "action_items": [
+    "Optional: rename SessionSummary's 'ROLLING ACCURACY · WINDOW=5' label to something like 'ROLLING ACCURACY · SMOOTHING=5' to avoid semantic collision with new PASAT windowSize config."
+  ],
+  "critical_code_review_comments": [
+    "DailyChallenge.jsx line 39: submitRecall() is called without a config arg — this replaces state.cfg with default merge because submitRecall's `cfg` param merges into next challenge. Currently harmless because DEFAULT_RECALL_CFG shape matches state.cfg, but user-customized cfg persists only because state.cfg is spread first. This works but is fragile — passing `state.cfg` explicitly would be safer.",
+    "OSPAN Runner: recall input uses per-item single-character parsing for 'letters' (line 110 `.split('')`), which means letters typed as space/comma-separated like 'A B C' get their spaces stripped and treated as 'ABC' correctly, but numbers input like '1 2 3' correctly uses regex — good. However for 'mixed' item type where letters and words mix in same trial, users may not know how to enter items — no on-screen hint about separator format.",
+    "TaskSwitching Runner: `commitNoResponse` and `respond` both check trial idx, but if user clicks BEFORE stimulusMs elapses on a re-render (React StrictMode double-effect), the trial loop useEffect could fire twice; guarded by responsesRef.find(index===trialIdx) which prevents duplicate response entries — GOOD.",
+    "PASAT reduceWindow: for 'avg' opKey computes overall mean of the window (documented in comments), but the `expected` reduces via `Math.round(val)` when cfg.decimals=false — rounding a 3-value average may hide small errors. Consider allowing tolerance ±1 during answer scoring.",
+    "dailyRecall.seedFromDate uses `Date.now() % 100` as jitter (line 33) — this means the challenge changes each time ensureTodaysChallenge is called during the same day. The 'pending' object guards against regeneration (line 86 early-return), so in practice this only matters for the initial seed. OK.",
+    "TaskSwitchingRunner clears timers on effect cleanup, but audio (beep) is not stopped if user hits exit mid-session — same as flagged in iteration 1 for NBack/PASAT."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A", "frontend": "100% (all 10 requested test flows PASS)" },
+  "test_credentials": "None — local-only app",
+  "seed_data_creation": "For recall-mode simulation, backdated localStorage 'neuroforge:v1:dailyRecall'.pending.generatedOn to '2020-01-01' via page.evaluate then reloaded (as per review request).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All iteration 2 features work as spec'd. Data-testids used: task-card-{id}, ts-settings, ts-cfg-quadrant-0..3, ts-cfg-rounds, ts-cfg-switch-prob, ts-respond-A/B, ts-quadrant-0..3, ts-stimulus, ts-exit-btn, ts-switch-cost, ospan-settings, ospan-cfg-item/recall/distractor-arithmetic/distractor-spatial/start/max, ospan-runner, ospan-item, ospan-distractor-prompt, ospan-distractor-yes/no/same/different, ospan-recall-input, ospan-recall-submit, ospan-breakdown, pasat-cfg-window, daily-recall-card, memorize-mode/phrase/number, new-challenge-btn, recall-config-toggle, cfg-word-count/number-length/charset, recall-cfg-save, recall-mode, recall-phrase-input, recall-number-input, recall-submit-btn, recall-skip-btn, recall-result, recall-streak, recall-longest, analytics-task-filter. When testing OSPAN runners, note distractor sometimes appears before recall — script must handle both arithmetic (yes/no) and spatial (same/different) even if only 'arithmetic' toggle is enabled by default. When testing PASAT window=3, first 2 trials have no expected answer (correct — only W-1..N-1 accept responses). Sessions persist to localStorage key 'neuroforge:v1:sessions'; each fresh mcp_browser_automation call = fresh browser context = fresh localStorage.",
+  "rca of the issue": "N/A — no bugs found in iteration 2. Iteration 1's restoreSession StrictMode bug was verified fixed in a previous run per handoff note."
+}

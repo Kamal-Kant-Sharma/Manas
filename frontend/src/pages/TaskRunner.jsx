@@ -5,6 +5,8 @@ import { useApp } from "../lib/store";
 import NBackRunner from "../tasks/nback/Runner";
 import PASATRunner from "../tasks/pasat/Runner";
 import MemorySpanRunner from "../tasks/memorySpan/Runner";
+import TaskSwitchingRunner from "../tasks/taskSwitching/Runner";
+import OSPANRunner from "../tasks/ospan/Runner";
 import SessionSummary from "./SessionSummary";
 import { toast } from "sonner";
 
@@ -12,6 +14,8 @@ const RUNNER = {
   nback: NBackRunner,
   pasat: PASATRunner,
   memorySpan: MemorySpanRunner,
+  taskSwitching: TaskSwitchingRunner,
+  ospan: OSPANRunner,
 };
 
 export default function TaskRunner() {
