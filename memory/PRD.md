@@ -20,6 +20,31 @@ Pure React frontend, no backend. Modular task registry — each task is self-con
 
 ## What's Been Implemented (2026-02-09)
 
+### Iteration 3 additions
+- **Cognitive Profile System** — 15 domains, generic scoring engine (`sessionScore = (acc·0.55 + rtNorm·0.25 + consistency·0.20) × difficulty × recency`, half-life 10d), radar + trend + progress bars page at `/profile`. Virtual `dailyRecall` task feeds Long-Term Memory.
+- **Circadian & Lifestyle Analysis** at `/circadian` — hourly accuracy/RT/volume charts, hour×day heatmap, auto-insights (best/worst hours), optional context logging (sleep, mood, stress, caffeine, energy) with Pearson correlations vs accuracy.
+- **Training Recommendation Engine** at `/recommendations` — today's focus domain, top-3 suggested tasks (largest-remainder rounded to 100%), 7-day schedule (5 training + 2 rest), rest-day suggestion, plateau/improving/declining insights, goal alignment.
+- **Corsi Block-Tapping Test** — new modular task (classic 9-block scatter / grid / random layouts, forward/backward, adaptive length). All 6 tasks now declare `domainContributions`.
+- Sidebar: 10 nav items (Dashboard, Tasks, Profile, Coach, Analytics, Circadian, Sessions, Presets, Goals, Settings).
+- Fixes: Corsi RT stdev/median/min/max now computed from real per-attempt data (was hardcoded 0); Recommendations task % uses largest-remainder rounding (always sums to 100).
+
+### Iteration 2 additions
+- **Task Switching** — 4 quadrants × 11 built-in rules (letter case/vowel/before-M/curved; number even/prime/>N/<N/±/divisible; color match). Stats: switch cost, per-quadrant + per-rule accuracy.
+- **Operation Span (OSPAN)** — memorize → distractor → recall alternation. Item pool × 6 recall modes. Distractors: mental arithmetic + spatial pattern matching. Reports memory/distractor/combined + absolute + partial span.
+- **Daily Delayed Recall** — dashboard feature. Auto-generates phrase + number, recall next day, Levenshtein for phrase, streak/longest streak/history heatmap.
+- **PASAT rolling window** — `windowSize` field (2..8), added GCD & LCM ops.
+
+### Iteration 1 core
+- Home dashboard (streak, total time, best accuracy, fastest RT, weekly bar chart, quick-start, recent sessions, PRs, presets).
+- **N-Back**: 8 stream types, 3×3–9×9 grid, adjustable N/timing/prob, per-stream confusion matrices + radar.
+- **PASAT**: paced serial addition, 6 (now 8) ops, single/alt/random modes.
+- **Memory Span**: 8 stimulus types × 5 recall modes, adaptive length.
+- Analytics (line/bar/pie/scatter/heatmap/radar), filters by task + date range.
+- Session Summary (KPIs, confusion matrix, rolling accuracy, RT histogram, per-stream radar).
+- Sessions log (search, filter, delete→trash→restore, JSON+CSV export, JSON import, detail dialog).
+- Presets, Goals (auto-evaluated), Settings.
+- Design: Tokyo Night dark IDE palette; Chivo + IBM Plex Sans + JetBrains Mono; sharp 4px corners; grain overlay.
+
 ## Prioritized Backlog
 
 ### P1 (Next up)

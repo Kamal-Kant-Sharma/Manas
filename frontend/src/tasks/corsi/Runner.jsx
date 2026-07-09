@@ -102,7 +102,12 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
     const total = attempts.length;
     const correct = attempts.filter((a) => a.success).length;
     const accuracy = total ? correct / total : 0;
-    const meanRT = total ? attempts.reduce((s, a) => s + a.rtMs, 0) / total : null;
+    const rts = attempts.map((a) => a.rtMs).filter(Number.isFinite);
+    const meanRT = rts.length ? rts.reduce((s, x) => s + x, 0) / rts.length : null;
+    const variance = rts.length ? rts.reduce((s, x) => s + (x - meanRT) ** 2, 0) / rts.length : 0;
+    const stdevRT = Math.sqrt(variance);
+    const sorted = [...rts].sort((a, b) => a - b);
+    const medianRT = sorted.length ? sorted[Math.floor(sorted.length / 2)] : null;
     const maxSpan = attempts.filter((a) => a.success).reduce((m, a) => Math.max(m, a.length), 0);
     const orderErrors = attempts.reduce((s, a) => s + a.orderErrors, 0);
     const summary = {
@@ -112,7 +117,14 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
       orderErrors,
       positionErrors: orderErrors,
       metrics: { accuracy, precision: accuracy, recall: accuracy, f1: accuracy, specificity: 1 },
-      rt: { mean: meanRT, median: meanRT, min: meanRT, max: meanRT, stdev: 0, count: total },
+      rt: {
+        mean: meanRT,
+        median: medianRT,
+        min: sorted[0] ?? null,
+        max: sorted[sorted.length - 1] ?? null,
+        stdev: stdevRT,
+        count: rts.length,
+      },
     };
     const trials = attempts.map((a, i) => ({ index: i, isTarget: true, responded: a.success, rtMs: a.rtMs }));
     onFinish?.({ config, trials, summary, attempts });

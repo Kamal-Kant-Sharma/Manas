@@ -70,19 +70,18 @@ export function buildRecommendations(sessions, goals = [], opts = {}) {
   const suggested = Object.entries(taskWeights)
     .sort((a, b) => b[1] - a[1])
     .slice(0, maxSuggestions)
-    .map(([taskId, w]) => {
-      const total = Object.values(taskWeights).reduce((s, x) => s + x, 0) || 1;
-      return {
-        task: getTask(taskId),
-        percentage: Math.round((w / total) * 100),
-      };
-    });
-  // Renormalize percentages so they sum to 100
+    .map(([taskId, w]) => ({ task: getTask(taskId), rawWeight: w }));
+  // Largest-remainder rounding so percentages sum to exactly 100
   if (suggested.length) {
-    const sum = suggested.reduce((s, x) => s + x.percentage, 0);
-    if (sum > 0) {
-      suggested.forEach((s) => { s.percentage = Math.round((s.percentage / sum) * 100); });
-    }
+    const total = suggested.reduce((s, x) => s + x.rawWeight, 0) || 1;
+    const shares = suggested.map((s) => ({ ...s, exact: (s.rawWeight / total) * 100 }));
+    shares.forEach((s) => { s.floor = Math.floor(s.exact); s.rem = s.exact - s.floor; });
+    let leftover = 100 - shares.reduce((s, x) => s + x.floor, 0);
+    shares.sort((a, b) => b.rem - a.rem);
+    for (let i = 0; i < shares.length && leftover > 0; i++, leftover--) shares[i].floor++;
+    // restore original ordering by rawWeight desc (already sorted before mapping)
+    shares.sort((a, b) => b.rawWeight - a.rawWeight);
+    shares.forEach((s, i) => { suggested[i] = { task: s.task, percentage: s.floor }; });
   }
 
   // Suggested session length: 15-30 minutes based on recent volume
