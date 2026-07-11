@@ -116,6 +116,23 @@ const nback = {
   short: "Working memory · multi-stream",
   color: "hsl(var(--chart-1))",
   defaults: DEFAULT_NBACK,
+  howToPlay: [
+    "A stream of stimuli appears one at a time. For each enabled stream (position, letter, audio, etc.), decide whether the current stimulus matches the one shown N steps back.",
+    "Press the corresponding response button (or hotkey) only when the current stimulus is a match. Do NOT respond otherwise.",
+    "You have until the next stimulus appears to respond. Warm-up trials at the start don't count toward your score.",
+  ],
+  keybinds: [
+    { key: "A", action: "Position match" },
+    { key: "S", action: "Color match" },
+    { key: "D", action: "Number match" },
+    { key: "F", action: "Letter match" },
+    { key: "G", action: "Shape match" },
+    { key: "H", action: "Symbol match" },
+    { key: "L", action: "Audio letter match" },
+    { key: ";", action: "Audio number match" },
+    { key: "Space", action: "Pause / resume" },
+    { key: "Esc", action: "Pause" },
+  ],
   domainContributions: {
     workingMemory:     1.0,
     attention:         0.7,

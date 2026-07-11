@@ -78,6 +78,16 @@ const corsi = {
   short: "Spatial working memory · tap the sequence",
   color: "hsl(var(--chart-7))",
   defaults: DEFAULT_CORSI,
+  howToPlay: [
+    "A set of blocks is shown at fixed positions on the board (9 by default, arranged in the classic Corsi scatter).",
+    "The blocks light up one at a time in a sequence — watch carefully and remember the order.",
+    "After the sequence ends, tap (or click) the blocks in the same order for forward recall, or reverse order for backward recall.",
+    "Sequence length grows on success and stops after the configured number of failures at one length. Your maximum span is the highest length you got right.",
+  ],
+  keybinds: [
+    { key: "Click", action: "Tap a block during recall" },
+    { key: "Esc", action: "Exit session" },
+  ],
   domainContributions: {
     spatialMemory:   1.0,
     workingMemory:   0.8,

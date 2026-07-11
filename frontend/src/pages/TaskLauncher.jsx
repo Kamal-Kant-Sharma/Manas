@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
-import { Play, Save, RotateCcw } from "lucide-react";
+import { Play, Save, RotateCcw, BookOpen, Keyboard } from "lucide-react";
 import PageHeader from "../components/common/PageHeader";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -85,7 +85,43 @@ export default function TaskLauncher() {
         }
       />
       <div className="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-8">
-        <div>
+        <div className="space-y-6">
+          {(task.howToPlay?.length || task.keybinds?.length) && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" data-testid="task-briefing">
+              {task.howToPlay?.length > 0 && (
+                <div className="border border-border rounded-sm bg-card p-5" data-testid="task-how-to">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                    <div className="overline">how to play</div>
+                  </div>
+                  <ol className="space-y-2 text-sm">
+                    {task.howToPlay.map((line, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span className="metric text-xs text-muted-foreground shrink-0 pt-0.5">{String(i + 1).padStart(2, "0")}</span>
+                        <span className="leading-snug">{line}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+              {task.keybinds?.length > 0 && (
+                <div className="border border-border rounded-sm bg-card p-5" data-testid="task-keybinds">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Keyboard className="w-4 h-4 text-primary" strokeWidth={1.5} />
+                    <div className="overline">keybinds & inputs</div>
+                  </div>
+                  <div className="space-y-1.5">
+                    {task.keybinds.map((k, i) => (
+                      <div key={i} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="text-muted-foreground truncate">{k.action}</span>
+                        <kbd className="metric text-xs px-2 py-0.5 border border-border rounded-sm bg-input shrink-0">{k.key}</kbd>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           <SettingsUI value={config} onChange={setConfig} />
         </div>
         <aside className="space-y-6">

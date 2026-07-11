@@ -180,6 +180,18 @@ const taskSwitching = {
   short: "Cognitive flexibility · switch cost",
   color: "hsl(var(--chart-5))",
   defaults: DEFAULT_TASK_SWITCHING,
+  howToPlay: [
+    "A stimulus (a letter and a number, optionally with colors) appears in ONE of four quadrants.",
+    "Each quadrant is assigned a rule (e.g., Top-Left → 'Is the letter uppercase?'). The rule to apply depends on WHERE the stimulus appears.",
+    "Answer using the two response buttons (labels update per rule). Between trials the quadrant may repeat (a 'repeat trial') or change (a 'switch trial').",
+    "Switch cost = mean(RT on switch trials) − mean(RT on repeat trials). Lower is better.",
+  ],
+  keybinds: [
+    { key: "F", action: "Response A (left button label)" },
+    { key: "J", action: "Response B (right button label)" },
+    { key: "Space", action: "Pause / resume" },
+    { key: "Esc", action: "Exit session" },
+  ],
   domainContributions: {
     cognitiveFlexibility: 1.0,
     executiveFunction:    0.8,

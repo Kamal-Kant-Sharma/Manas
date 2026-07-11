@@ -95,6 +95,17 @@ const pasat = {
   short: "Paced serial addition · attention & speed",
   color: "hsl(var(--chart-4))",
   defaults: DEFAULT_PASAT,
+  howToPlay: [
+    "A stream of numbers is presented at a fixed pace, one at a time (audio, visual, or both).",
+    "After each new number, apply the configured operation across the most recent 'window' of numbers (default 2 = current + previous) and type the answer.",
+    "For a window of 3 with the '+' operation: given the stream 3 5 2 7, expected answers are 3+5+2 = 10, then 5+2+7 = 14.",
+    "Skipped answers count as incorrect. First (window − 1) trials have no expected answer and are ignored.",
+  ],
+  keybinds: [
+    { key: "0–9 / −", action: "Type the answer" },
+    { key: "Enter", action: "Submit early" },
+    { key: "Esc", action: "Exit session" },
+  ],
   domainContributions: {
     workingMemory:    0.8,
     mentalArithmetic: 1.0,

@@ -70,6 +70,16 @@ const memorySpan = {
   short: "Sequence recall · working memory capacity",
   color: "hsl(var(--chart-2))",
   defaults: DEFAULT_MEMORY_SPAN,
+  howToPlay: [
+    "A sequence of items (digits, letters, positions, colors, words, shapes, or audio) is presented one at a time.",
+    "After the sequence ends, type it back in the requested order (forward, backward, ascending, descending, or alphabetical).",
+    "Separate items with spaces or commas — digits and single letters can be concatenated (e.g., '4172' or 'KMPB').",
+    "Sequence length grows every time you succeed and stops after the configured number of failures at one length.",
+  ],
+  keybinds: [
+    { key: "Type", action: "Enter recall sequence" },
+    { key: "Enter", action: "Submit" },
+  ],
   domainContributions: {
     shortTermMemory: 1.0,
     workingMemory:   0.7,

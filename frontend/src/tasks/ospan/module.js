@@ -137,6 +137,17 @@ const ospan = {
   short: "Working memory · memorize + distractor + recall",
   color: "hsl(var(--chart-6))",
   defaults: DEFAULT_OSPAN,
+  howToPlay: [
+    "A short item (letter, number, color, word, shape or symbol) is shown for you to memorize.",
+    "Immediately after, a distractor task appears — either a mental arithmetic problem to verify (True/False) or two spatial patterns to compare (Same/Different).",
+    "This alternation repeats for the current sequence length. When the last distractor finishes, type back ALL memorized items in the requested recall order.",
+    "You must both remember the sequence AND solve distractors quickly. Sequence length increases on success; stops after the allowed failures.",
+  ],
+  keybinds: [
+    { key: "Click", action: "Answer distractor (True / False or Same / Different)" },
+    { key: "Type", action: "Recall the sequence" },
+    { key: "Enter", action: "Submit recall" },
+  ],
   domainContributions: {
     workingMemory:     1.0,
     executiveFunction: 0.7,
