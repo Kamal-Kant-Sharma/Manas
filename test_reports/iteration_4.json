@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 4 — Corsi task refactor (fresh-blocks-per-trial + tap-and-disappear) verified end-to-end. All 9 requested scenarios pass. Bug (double-tap ambiguity) is architecturally impossible because each trial creates a fresh set of `length` unique blocks with sequence ids 0..length-1, and each block is removed from the DOM the moment it is tapped. Settings page confirmed no longer contains blocks/layout inputs.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/test_reports/iteration_4.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Runner.jsx line ~76: `expected` is recomputed inside submitRecall using current `blocks` state — this is correct because blocks are trial-local, but if a future refactor introduces async block regeneration mid-recall this could drift. Consider snapshotting the sequence at present→recall transition.",
+    "Runner.jsx line ~110: submitRecall dependency array omits `length` even though eslint-disable comment is applied — currently OK because setLength happens after submitRecall returns, but explicit dependency + useCallback re-creation is cleaner.",
+    "module.js line ~34: generateBlocks fallback grid placement fires only if 5000 random attempts fail. For length ≤ 12 with 480px board this is essentially never hit; still, consider logging a warning when the fallback triggers so researchers know positions weren't purely random.",
+    "Runner.jsx: `disabled={phase !== 'recall'}` on the block button is correct, but during the brief 180ms between last-tap and submitRecall, the block is already removed from DOM (via `removed` Set) so extra clicks are impossible — good defense-in-depth.",
+    "TaskRunner.jsx line 63-65: onExit uses window.confirm — this blocks the JS event loop and can be inaccessible to screen-reader users; consider a shadcn AlertDialog for consistency with the rest of the UI. Not a Corsi-refactor issue, pre-existing."
+  ],
+  "updated_files": [],
+  "success_rate": { "backend": "N/A (no backend in scope)", "frontend": "100% (9/9 Corsi scenarios PASS)" },
+  "test_credentials": "None — local-only app, no auth.",
+  "seed_data_creation": "Live Corsi sessions created during testing: 3 sessions written to localStorage 'neuroforge:v1:sessions' (config 'forward · from 2 up to 4', 'forward · from 3 up to 3', 'forward · from 5 up to 5'). All visible in Session Log page.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Corsi refactor is complete and verified. Key data-testids in play: corsi-settings, corsi-cfg-recall (Select), corsi-cfg-start (Input), corsi-cfg-max (Input), corsi-runner, corsi-board, corsi-block-{0..length-1} (dynamic), corsi-progress ('tapped X / N'), corsi-exit-btn, start-session-btn. The old corsi-cfg-blocks and corsi-cfg-layout data-testids are REMOVED. Trial mechanics: each trial calls generateBlocks(length) → sets blocks state fresh, blockPx scales by length (72@≤5, 62@≤8, 54@≤11, 46 else). Presentation lights id=0,1,2,... sequentially via `litIdx` state → background switches to 'hsl(var(--primary))'. During recall phase, each tap adds to `tapped[]` and adds blockId to `removed` Set (block returns null from render). Auto-submits when tapped.length >= blocks.length. Forward expects tap order [0,1,2,...], backward reverses. On success: length++, if > maxLength → finish. On fail: failuresAtLength++, if >= trialsPerLength → finish. Session persists to 'neuroforge:v1:sessions' with taskId='corsi' and contributes to Spatial Memory domain. Note: Escape key exits via TaskRunner.onExit which calls window.confirm() — playwright tests must register page.on('dialog', ...) to auto-accept. Recharts width(-1)/height(-1) warnings in SessionSummary are pre-existing cosmetic (documented iteration_3).",
+  "verified_scenarios": {
+    "1_settings_removed": "PASS — corsi-cfg-blocks and corsi-cfg-layout are absent from /tasks/corsi. Remaining: corsi-cfg-recall, corsi-cfg-start, corsi-cfg-max + failures-allowed & 3 timing inputs (6 number inputs total).",
+    "2_three_blocks_light_in_order": "PASS — startLength=3 config produced exactly 3 blocks (corsi-block-0..2, no corsi-block-3). Observed lit sequence during presentation: [0, 1, 2].",
+    "3_tap_and_disappear": "PASS — Tapping corsi-block-0 removes it from DOM (query returns None). Progress goes 'tapped 0/3' → '1/3' → '2/3'. Third tap auto-submits and Session Summary appears with ACCURACY 100%, MAX SPAN 3, 'Session saved' toast.",
+    "4_five_blocks_unique": "PASS — startLength=5, tapped corsi-block-0..4 in order. Each disappeared individually. No block was ever tapped more than once (double-tap ambiguity architecturally impossible). ACCURACY 100%.",
+    "5_failure_path": "PASS — startLength=3, maxLength=3, trials=1. Tapped in wrong order (2,0,1). Session immediately transitioned to Session Summary with ACCURACY 0.0% after single failed trial.",
+    "6_progression_success": "PASS — startLength=2, maxLength=4, trials=1. Completed length-2 → length-3 → length-4 all correctly. Session Summary shows MAX SPAN 4, ACCURACY 100%, 3 trials in RT distribution.",
+    "7_fresh_positions_per_trial": "PASS — block-0.style.left changed between length-2 trial (32.05%) and length-3 trial (47.92%). Also captured length-5 trial positions {0:47.77%, 1:40.46%, 2:66.84%, 3:45.02%, 4:80.84%} — all distinct and non-overlapping.",
+    "8_session_persistence": "PASS — After live Corsi run, /sessions shows 3 Corsi Blocks entries with correct config summaries ('forward · from 2 up to 4', 'forward · from 3 up to 3', 'forward · from 5 up to 5'). localStorage 'neuroforge:v1:sessions' contains 3 corsi entries. Sidebar shows '3 sessions'. Cognitive Profile spatial-memory domain will be populated (verified via prior iteration 3).",
+    "9_escape_exits": "PASS — Pressing Escape during Corsi session (after auto-accepting window.confirm dialog) navigated from /run/corsi back to / (Dashboard)."
+  },
+  "rca of the issue": "N/A — the reported bug (double-tap ambiguity when the same block appears twice in a sequence) is architecturally resolved. Each trial now creates `length` unique blocks (ids 0..length-1); the sequence to remember IS the block-id order itself (0,1,2,...). Because each block corresponds to exactly one position in the sequence and disappears on tap, the same block can never need to be tapped twice. Verified by starting length-5 trial and tapping 5 unique blocks with no repetition ambiguity."
+}

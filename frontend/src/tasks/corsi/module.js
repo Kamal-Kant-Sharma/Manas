@@ -1,5 +1,9 @@
 // Corsi Block-Tapping Test.
-// A set of blocks is shown. A sequence lights up. User taps blocks in order.
+// Each trial: generate `length` fresh blocks at non-overlapping positions.
+// Blocks light up one after another (in creation order). User then taps
+// them in the required order (forward = same order, backward = reversed).
+// Each tap removes the block from the board — this cleanly handles what
+// would otherwise be double-tap ambiguity in a fixed-layout Corsi.
 
 function mulberry32(seed) {
   return function () {
@@ -11,63 +15,64 @@ function mulberry32(seed) {
 }
 const rng = (s) => (s == null ? Math.random : mulberry32(s));
 
-// Classic Corsi 9-block scattered layout (percentages inside a container).
-export const CLASSIC_LAYOUT_9 = [
-  { x: 18, y: 22 }, { x: 62, y: 15 }, { x: 88, y: 34 },
-  { x: 45, y: 40 }, { x: 12, y: 55 }, { x: 78, y: 58 },
-  { x: 30, y: 78 }, { x: 55, y: 85 }, { x: 88, y: 82 },
-];
-
-export function generateLayout(cfg, r) {
-  const N = cfg.blocks;
-  const kind = cfg.layout;
-  if (kind === "classic" && N === 9) return CLASSIC_LAYOUT_9;
-  if (kind === "grid") {
-    const cols = Math.ceil(Math.sqrt(N));
-    const rows = Math.ceil(N / cols);
-    const out = [];
-    for (let i = 0; i < N; i++) {
-      const c = i % cols, row = Math.floor(i / cols);
-      out.push({ x: (100 / (cols + 1)) * (c + 1), y: (100 / (rows + 1)) * (row + 1) });
-    }
-    return out;
-  }
-  // random: reject overlapping positions (min 22% separation)
-  const out = [];
-  const MIN = 20;
-  let attempts = 0;
-  while (out.length < N && attempts < 500) {
-    attempts++;
-    const p = { x: 10 + r() * 80, y: 10 + r() * 80 };
-    const ok = out.every((q) => Math.hypot(p.x - q.x, p.y - q.y) >= MIN);
-    if (ok) out.push(p);
-  }
-  return out;
+// Board is treated as a 100×100 percentage grid; block positions are in %.
+export function blockSizeFor(length) {
+  if (length <= 5)  return 72;
+  if (length <= 8)  return 62;
+  if (length <= 11) return 54;
+  return 46;
 }
 
-// Build a random sequence of length L from blocks 0..N-1, no immediate repeats.
-export function generateSequence(N, L, r) {
-  const seq = [];
-  while (seq.length < L) {
-    const idx = Math.floor(r() * N);
-    if (seq.length && seq[seq.length - 1] === idx) continue;
-    seq.push(idx);
+// Generate `length` block positions that don't overlap.
+// blockSize is in pixels; boardSize is the container size in pixels.
+export function generateBlocks(length, r, boardSize = 480) {
+  const blockPx = blockSizeFor(length);
+  const marginPct = (blockPx / boardSize) * 50; // half block in %
+  const minSepPct = (blockPx / boardSize) * 100 + 3; // block width + a hair
+  const positions = [];
+  let attempts = 0;
+  while (positions.length < length && attempts < 5000) {
+    attempts++;
+    const p = {
+      x: marginPct + r() * (100 - 2 * marginPct),
+      y: marginPct + r() * (100 - 2 * marginPct),
+    };
+    const ok = positions.every((q) => Math.hypot(p.x - q.x, p.y - q.y) >= minSepPct);
+    if (ok) positions.push(p);
   }
-  return seq;
+  // Fallback: if we still don't have enough (crowded board), relax and place on a grid
+  if (positions.length < length) {
+    positions.length = 0;
+    const cols = Math.ceil(Math.sqrt(length));
+    const rows = Math.ceil(length / cols);
+    for (let i = 0; i < length; i++) {
+      const c = i % cols;
+      const row = Math.floor(i / cols);
+      positions.push({
+        x: (100 / (cols + 1)) * (c + 1),
+        y: (100 / (rows + 1)) * (row + 1),
+      });
+    }
+  }
+  // Each block gets an id = its index (which is also its position in the sequence)
+  return positions.map((p, i) => ({ id: i, ...p, blockPx }));
+}
+
+// Expected tap order given a sequence-of-block-ids and recall mode.
+export function expectedOrder(blockIds, recall) {
+  return recall === "backward" ? [...blockIds].reverse() : [...blockIds];
 }
 
 export const DEFAULT_CORSI = {
   taskId: "corsi",
-  blocks: 9,
-  layout: "classic",           // classic | grid | random
   startLength: 3,
   maxLength: 12,
   adaptive: true,
-  trialsPerLength: 2,          // fails allowed per length
+  trialsPerLength: 2,          // failures allowed per length
   recall: "forward",           // forward | backward
   presentationMs: 700,
   gapMs: 300,
-  recallTimeoutMs: 15000,
+  recallTimeoutMs: 20000,
   seed: null,
   practice: false,
 };
@@ -79,10 +84,10 @@ const corsi = {
   color: "hsl(var(--chart-7))",
   defaults: DEFAULT_CORSI,
   howToPlay: [
-    "A set of blocks is shown at fixed positions on the board (9 by default, arranged in the classic Corsi scatter).",
-    "The blocks light up one at a time in a sequence — watch carefully and remember the order.",
-    "After the sequence ends, tap (or click) the blocks in the same order for forward recall, or reverse order for backward recall.",
-    "Sequence length grows on success and stops after the configured number of failures at one length. Your maximum span is the highest length you got right.",
+    "Each round, a fresh set of blocks appears at new positions on the board.",
+    "The blocks light up one after another — remember the order in which they light up.",
+    "When it's your turn, tap the blocks in the same order for forward recall, or in reverse order for backward recall.",
+    "Each block disappears as soon as you tap it. Sequence length grows on success and the session ends after the configured number of failures at one length.",
   ],
   keybinds: [
     { key: "Click", action: "Tap a block during recall" },
@@ -95,7 +100,7 @@ const corsi = {
     attention:       0.4,
   },
   describeConfig(cfg) {
-    return `${cfg?.blocks ?? 9} blocks · ${cfg?.layout ?? "classic"} · ${cfg?.recall ?? "forward"} · from ${cfg?.startLength ?? 3}`;
+    return `${cfg?.recall ?? "forward"} · from ${cfg?.startLength ?? 3} up to ${cfg?.maxLength ?? 12}`;
   },
   summarizeKPI(session) {
     return [

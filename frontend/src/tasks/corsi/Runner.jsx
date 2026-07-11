@@ -1,35 +1,40 @@
-import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { X } from "lucide-react";
 import { Button } from "../../components/ui/button";
-import { generateLayout, generateSequence, makeRng } from "./module";
+import { generateBlocks, expectedOrder, makeRng } from "./module";
 import { beep } from "../../lib/audio";
 import { useApp } from "../../lib/store";
+
+const BOARD_SIZE = 480;
 
 export default function CorsiRunner({ config, onFinish, onExit }) {
   const { settings } = useApp();
   const rngRef = useRef(makeRng(config.seed));
-  const layout = useMemo(() => generateLayout(config, rngRef.current), [config]);
   const [length, setLength] = useState(config.startLength);
   const [phase, setPhase] = useState("countdown"); // countdown | present | recall | feedback | finished
   const [countdown, setCountdown] = useState(3);
-  const [sequence, setSequence] = useState([]);
-  const [showIdx, setShowIdx] = useState(-1);
-  const [tapped, setTapped] = useState([]);
-  const [feedbackBlock, setFeedbackBlock] = useState(null); // { idx, ok }
+  const [blocks, setBlocks] = useState([]);       // [{id, x, y, blockPx}]
+  const [litIdx, setLitIdx] = useState(-1);       // block id currently lit during presentation
+  const [tapped, setTapped] = useState([]);       // list of block ids in click order
+  const [removed, setRemoved] = useState(() => new Set());
+  const [flashBlock, setFlashBlock] = useState(null); // { id, ok }
   const [failuresAtLength, setFailuresAtLength] = useState(0);
   const attemptsRef = useRef([]);
   const startRef = useRef(0);
-  const timerRef = useRef(null);
-  const recallTimeoutRef = useRef(null);
+  const presentTimer = useRef(null);
+  const recallTimeout = useRef(null);
+  const tappedRef = useRef([]);
+  useEffect(() => { tappedRef.current = tapped; }, [tapped]);
 
   const startTrial = useCallback(() => {
-    const seq = generateSequence(config.blocks, length, rngRef.current);
-    setSequence(seq);
+    const bs = generateBlocks(length, rngRef.current, BOARD_SIZE);
+    setBlocks(bs);
+    setLitIdx(-1);
     setTapped([]);
-    setShowIdx(-1);
-    setFeedbackBlock(null);
+    setRemoved(new Set());
+    setFlashBlock(null);
     setPhase("present");
-  }, [config.blocks, length]);
+  }, [length]);
 
   useEffect(() => {
     if (phase !== "countdown") return;
@@ -38,44 +43,51 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
     return () => clearTimeout(t);
   }, [phase, countdown, startTrial]);
 
-  // Present sequence
+  // Presentation: light each block in creation order
   useEffect(() => {
-    if (phase !== "present") return;
+    if (phase !== "present" || blocks.length === 0) return;
     let i = 0;
     const step = () => {
-      if (i >= sequence.length) {
-        setShowIdx(-1);
+      if (i >= blocks.length) {
+        setLitIdx(-1);
         setPhase("recall");
         startRef.current = performance.now();
-        recallTimeoutRef.current = setTimeout(() => submitRecall([...tappedRef.current]), config.recallTimeoutMs);
+        // Kick off recall timeout
+        recallTimeout.current = setTimeout(() => {
+          submitRecall(tappedRef.current);
+        }, config.recallTimeoutMs);
         return;
       }
-      setShowIdx(sequence[i]);
-      timerRef.current = setTimeout(() => {
-        setShowIdx(-1);
-        timerRef.current = setTimeout(() => { i++; step(); }, config.gapMs);
+      setLitIdx(blocks[i].id);
+      presentTimer.current = setTimeout(() => {
+        setLitIdx(-1);
+        presentTimer.current = setTimeout(() => { i++; step(); }, config.gapMs);
       }, config.presentationMs);
     };
     step();
-    return () => { clearTimeout(timerRef.current); };
+    return () => { clearTimeout(presentTimer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, sequence]);
-
-  const tappedRef = useRef([]);
-  useEffect(() => { tappedRef.current = tapped; }, [tapped]);
+  }, [phase, blocks]);
 
   const submitRecall = useCallback((given) => {
-    clearTimeout(recallTimeoutRef.current);
+    clearTimeout(recallTimeout.current);
+    if (phase === "finished" || phase === "feedback") return;
     const rt = performance.now() - startRef.current;
-    const expected = config.recall === "backward" ? [...sequence].reverse() : [...sequence];
-    const positionErrors = Math.max(expected.length, given.length) -
-      expected.filter((v, i) => v === given[i]).length;
-    const success = expected.length === given.length && positionErrors === 0;
+    const expected = expectedOrder(blocks.map((b) => b.id), config.recall);
+    // Score: length match AND order match
+    const orderErrors = expected.reduce((s, id, i) => s + (given[i] === id ? 0 : 1), 0);
+    const success = expected.length === given.length && orderErrors === 0;
 
     const attempt = {
-      length, sequence, expected, given, success,
-      positionErrors, orderErrors: positionErrors, rtMs: rt,
-      isTarget: true, responded: success,
+      length,
+      sequence: expected,
+      given,
+      success,
+      positionErrors: orderErrors,
+      orderErrors,
+      rtMs: rt,
+      isTarget: true,
+      responded: success,
     };
     attemptsRef.current.push(attempt);
     if (settings.soundEnabled) beep({ freq: success ? 880 : 220, duration: 80, volume: 0.08 });
@@ -94,7 +106,8 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
       setPhase("feedback");
       setTimeout(startTrial, 900);
     }
-  }, [config, length, sequence, failuresAtLength, startTrial, settings.soundEnabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blocks, config.recall, config.maxLength, config.trialsPerLength, length, failuresAtLength, phase, settings.soundEnabled, startTrial]);
 
   const finish = useCallback(() => {
     setPhase("finished");
@@ -104,7 +117,9 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
     const accuracy = total ? correct / total : 0;
     const rts = attempts.map((a) => a.rtMs).filter(Number.isFinite);
     const meanRT = rts.length ? rts.reduce((s, x) => s + x, 0) / rts.length : null;
-    const variance = rts.length ? rts.reduce((s, x) => s + (x - meanRT) ** 2, 0) / rts.length : 0;
+    const variance = rts.length && meanRT != null
+      ? rts.reduce((s, x) => s + (x - meanRT) ** 2, 0) / rts.length
+      : 0;
     const stdevRT = Math.sqrt(variance);
     const sorted = [...rts].sort((a, b) => a - b);
     const medianRT = sorted.length ? sorted[Math.floor(sorted.length / 2)] : null;
@@ -118,27 +133,43 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
       positionErrors: orderErrors,
       metrics: { accuracy, precision: accuracy, recall: accuracy, f1: accuracy, specificity: 1 },
       rt: {
-        mean: meanRT,
-        median: medianRT,
-        min: sorted[0] ?? null,
-        max: sorted[sorted.length - 1] ?? null,
-        stdev: stdevRT,
-        count: rts.length,
+        mean: meanRT, median: medianRT,
+        min: sorted[0] ?? null, max: sorted[sorted.length - 1] ?? null,
+        stdev: stdevRT, count: rts.length,
       },
     };
     const trials = attempts.map((a, i) => ({ index: i, isTarget: true, responded: a.success, rtMs: a.rtMs }));
     onFinish?.({ config, trials, summary, attempts });
   }, [config, onFinish]);
 
-  const onTap = (idx) => {
+  // Escape to exit
+  useEffect(() => {
+    function onKey(e) { if (e.key === "Escape") onExit?.(); }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onExit]);
+
+  const onTap = (blockId) => {
     if (phase !== "recall") return;
-    if (tapped.includes(idx)) return; // no double-tap on same block
-    setFeedbackBlock({ idx, ok: true });
-    setTimeout(() => setFeedbackBlock(null), 220);
-    const next = [...tapped, idx];
-    setTapped(next);
-    if (next.length >= sequence.length) {
-      setTimeout(() => submitRecall(next), 200);
+    if (removed.has(blockId)) return;
+    // Any tap removes the block. Order is compared at submit time.
+    setRemoved((prev) => {
+      const next = new Set(prev);
+      next.add(blockId);
+      return next;
+    });
+    const nextTapped = [...tapped, blockId];
+    setTapped(nextTapped);
+
+    // Determine whether this tap was correct at this position (for visual feedback only)
+    const expected = expectedOrder(blocks.map((b) => b.id), config.recall);
+    const wasCorrect = expected[tapped.length] === blockId;
+    setFlashBlock({ id: blockId, ok: wasCorrect });
+    setTimeout(() => setFlashBlock(null), 220);
+
+    if (nextTapped.length >= blocks.length) {
+      // Auto-submit once user has tapped all blocks
+      setTimeout(() => submitRecall(nextTapped), 180);
     }
   };
 
@@ -161,35 +192,33 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
           <>
             <div className="overline">
               {phase === "present" && "watch"}
-              {phase === "recall" && (config.recall === "backward" ? "tap in reverse order" : "tap in order")}
+              {phase === "recall" && (config.recall === "backward" ? "tap in reverse order" : "tap in the order shown")}
               {phase === "feedback" && "next"}
             </div>
             <div
               className="relative border border-border bg-input"
-              style={{ width: 480, height: 480 }}
+              style={{ width: BOARD_SIZE, height: BOARD_SIZE }}
               data-testid="corsi-board"
             >
-              {layout.map((pos, i) => {
-                const isLit = showIdx === i;
-                const isTapped = tapped.includes(i);
-                const isFeedback = feedbackBlock?.idx === i;
+              {blocks.map((b) => {
+                if (removed.has(b.id)) return null;
+                const isLit = litIdx === b.id;
+                const isFlash = flashBlock?.id === b.id;
                 return (
                   <button
-                    key={i}
-                    onClick={() => onTap(i)}
+                    key={b.id}
+                    onClick={() => onTap(b.id)}
                     disabled={phase !== "recall"}
-                    data-testid={`corsi-block-${i}`}
+                    data-testid={`corsi-block-${b.id}`}
                     className="absolute rounded-sm border border-border"
                     style={{
-                      left: `${pos.x}%`, top: `${pos.y}%`,
+                      left: `${b.x}%`, top: `${b.y}%`,
                       transform: "translate(-50%, -50%)",
-                      width: 60, height: 60,
-                      background: isLit
-                        ? "hsl(var(--primary))"
-                        : isTapped
-                          ? "hsl(var(--chart-3))"
-                          : "hsl(var(--card))",
-                      boxShadow: isFeedback ? "inset 0 0 0 2px hsl(var(--chart-3))" : "none",
+                      width: b.blockPx, height: b.blockPx,
+                      background: isLit ? "hsl(var(--primary))" : "hsl(var(--card))",
+                      boxShadow: isFlash
+                        ? (flashBlock.ok ? "inset 0 0 0 3px hsl(var(--chart-3))" : "inset 0 0 0 3px hsl(var(--destructive))")
+                        : "none",
                       transition: "background-color 120ms ease-out",
                     }}
                   />
@@ -197,7 +226,9 @@ export default function CorsiRunner({ config, onFinish, onExit }) {
               })}
             </div>
             {phase === "recall" && (
-              <div className="text-xs text-muted-foreground metric">tapped {tapped.length} / {sequence.length}</div>
+              <div className="text-xs text-muted-foreground metric" data-testid="corsi-progress">
+                tapped {tapped.length} / {blocks.length}
+              </div>
             )}
           </>
         )}
