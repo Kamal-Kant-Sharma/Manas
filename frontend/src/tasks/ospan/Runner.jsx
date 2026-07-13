@@ -95,6 +95,42 @@ export default function OSPANRunner({ config, onFinish, onExit }) {
     }, 300);
   }, [phase, currentDistractor, itemIdx, length, settings.soundEnabled]);
 
+    const finish = useCallback((attempts) => {
+    setPhase("finished");
+    const total = attempts.length;
+    const memCorrect = attempts.filter((a) => a.memoryCorrect).length;
+    const memoryAccuracy = total ? memCorrect / total : 0;
+    const totalDistHits = attempts.reduce((s, a) => s + a.distractorHits, 0);
+    const totalDistTotal = attempts.reduce((s, a) => s + a.distractorTotal, 0);
+    const distractorAccuracy = totalDistTotal ? totalDistHits / totalDistTotal : 1;
+    // Absolute span: sum of lengths where memory was perfect
+    const absoluteSpan = attempts.filter((a) => a.memoryCorrect).reduce((s, a) => s + a.length, 0);
+    // Partial span: sum of correct items per attempt
+    const partialSpan = attempts.reduce((s, a) => {
+      const correct = a.expected.filter((v, i) => v === a.given[i]).length;
+      return s + correct;
+    }, 0);
+    const maxSpan = attempts.filter((a) => a.memoryCorrect).reduce((m, a) => Math.max(m, a.length), 0);
+    const combinedScore = memoryAccuracy * distractorAccuracy;
+    // Generic stats trials
+    const trials = attempts.map((a, i) => ({ index: i, isTarget: true, responded: a.memoryCorrect, rtMs: a.rtMs }));
+    const summary = {
+      totalTrials: total,
+      correct: memCorrect,
+      metrics: { accuracy: memoryAccuracy, precision: memoryAccuracy, recall: memoryAccuracy, f1: memoryAccuracy, specificity: 1 },
+      rt: { mean: total ? attempts.reduce((s, a) => s + a.rtMs, 0) / total : null, median: null, min: null, max: null, stdev: null, count: total },
+      memoryAccuracy,
+      distractorAccuracy,
+      absoluteSpan,
+      partialSpan,
+      maxSpan,
+      combinedScore,
+      orderErrors: attempts.reduce((s, a) => s + a.positionErrors, 0),
+      positionErrors: attempts.reduce((s, a) => s + a.positionErrors, 0),
+    };
+    onFinish?.({ config, trials, summary, attempts });
+  }, [config, onFinish]);
+
   // Recall submission
   const submitRecall = useCallback(() => {
     const rt = performance.now() - startRef.current;
@@ -168,43 +204,7 @@ export default function OSPANRunner({ config, onFinish, onExit }) {
       setPhase("feedback");
       setTimeout(startTrial, 900);
     }
-  }, [recallInput, config, length, failuresAtLength, settings.soundEnabled, startTrial]);
-
-  const finish = useCallback((attempts) => {
-    setPhase("finished");
-    const total = attempts.length;
-    const memCorrect = attempts.filter((a) => a.memoryCorrect).length;
-    const memoryAccuracy = total ? memCorrect / total : 0;
-    const totalDistHits = attempts.reduce((s, a) => s + a.distractorHits, 0);
-    const totalDistTotal = attempts.reduce((s, a) => s + a.distractorTotal, 0);
-    const distractorAccuracy = totalDistTotal ? totalDistHits / totalDistTotal : 1;
-    // Absolute span: sum of lengths where memory was perfect
-    const absoluteSpan = attempts.filter((a) => a.memoryCorrect).reduce((s, a) => s + a.length, 0);
-    // Partial span: sum of correct items per attempt
-    const partialSpan = attempts.reduce((s, a) => {
-      const correct = a.expected.filter((v, i) => v === a.given[i]).length;
-      return s + correct;
-    }, 0);
-    const maxSpan = attempts.filter((a) => a.memoryCorrect).reduce((m, a) => Math.max(m, a.length), 0);
-    const combinedScore = memoryAccuracy * distractorAccuracy;
-    // Generic stats trials
-    const trials = attempts.map((a, i) => ({ index: i, isTarget: true, responded: a.memoryCorrect, rtMs: a.rtMs }));
-    const summary = {
-      totalTrials: total,
-      correct: memCorrect,
-      metrics: { accuracy: memoryAccuracy, precision: memoryAccuracy, recall: memoryAccuracy, f1: memoryAccuracy, specificity: 1 },
-      rt: { mean: total ? attempts.reduce((s, a) => s + a.rtMs, 0) / total : null, median: null, min: null, max: null, stdev: null, count: total },
-      memoryAccuracy,
-      distractorAccuracy,
-      absoluteSpan,
-      partialSpan,
-      maxSpan,
-      combinedScore,
-      orderErrors: attempts.reduce((s, a) => s + a.positionErrors, 0),
-      positionErrors: attempts.reduce((s, a) => s + a.positionErrors, 0),
-    };
-    onFinish?.({ config, trials, summary, attempts });
-  }, [config, onFinish]);
+  }, [recallInput, config, length, failuresAtLength, settings.soundEnabled, startTrial, finish]);
 
   // Render helpers
   const renderItem = (item) => {
