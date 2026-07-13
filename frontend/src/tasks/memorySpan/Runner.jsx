@@ -61,6 +61,30 @@ export default function MemorySpanRunner({ config, onFinish, onExit }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, sequence]);
 
+    const finish = useCallback((allAttempts) => {
+    setPhase("finished");
+    stopSpeaking();
+    const maxSpan = allAttempts.filter((a) => a.success).reduce((m, a) => Math.max(m, a.length), 0);
+    const total = allAttempts.length;
+    const correct = allAttempts.filter((a) => a.success).length;
+    const accuracy = total ? correct / total : 0;
+    const meanRT = total ? allAttempts.reduce((s, a) => s + a.rtMs, 0) / total : null;
+    const orderErrors = allAttempts.reduce((s, a) => s + a.orderErrors, 0);
+    const positionErrors = allAttempts.reduce((s, a) => s + a.positionErrors, 0);
+    const summary = {
+      maxSpan,
+      totalTrials: total,
+      correct,
+      metrics: { accuracy, precision: accuracy, recall: accuracy, f1: accuracy, specificity: 1 },
+      rt: { mean: meanRT, median: meanRT, min: meanRT, max: meanRT, stdev: 0, count: total },
+      orderErrors,
+      positionErrors,
+    };
+    // trials for generic engine
+    const trials = allAttempts.map((a, i) => ({ index: i, isTarget: true, responded: a.success, rtMs: a.rtMs }));
+    onFinish?.({ config, trials, summary, attempts: allAttempts });
+  }, [config, onFinish]);
+
   const submitRecall = useCallback(() => {
     const rt = performance.now() - startRef.current;
     const raw = userInput.trim();
@@ -142,31 +166,9 @@ export default function MemorySpanRunner({ config, onFinish, onExit }) {
       setPhase("feedback");
       setTimeout(() => startTrial(), 900);
     }
-  }, [userInput, sequence, length, config, attempts, attemptsAtLength, failuresAtLength, settings.soundEnabled, startTrial]);
+  }, [userInput, sequence, length, config, attempts, attemptsAtLength, failuresAtLength, settings.soundEnabled, startTrial, finish]);
 
-  const finish = useCallback((allAttempts) => {
-    setPhase("finished");
-    stopSpeaking();
-    const maxSpan = allAttempts.filter((a) => a.success).reduce((m, a) => Math.max(m, a.length), 0);
-    const total = allAttempts.length;
-    const correct = allAttempts.filter((a) => a.success).length;
-    const accuracy = total ? correct / total : 0;
-    const meanRT = total ? allAttempts.reduce((s, a) => s + a.rtMs, 0) / total : null;
-    const orderErrors = allAttempts.reduce((s, a) => s + a.orderErrors, 0);
-    const positionErrors = allAttempts.reduce((s, a) => s + a.positionErrors, 0);
-    const summary = {
-      maxSpan,
-      totalTrials: total,
-      correct,
-      metrics: { accuracy, precision: accuracy, recall: accuracy, f1: accuracy, specificity: 1 },
-      rt: { mean: meanRT, median: meanRT, min: meanRT, max: meanRT, stdev: 0, count: total },
-      orderErrors,
-      positionErrors,
-    };
-    // trials for generic engine
-    const trials = allAttempts.map((a, i) => ({ index: i, isTarget: true, responded: a.success, rtMs: a.rtMs }));
-    onFinish?.({ config, trials, summary, attempts: allAttempts });
-  }, [config, onFinish]);
+
 
   // Render the current stimulus item
   const renderStim = () => {
